@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة الأختام - سيرفر 92</title>
+    <style>
+        :root { --gold: #ffd700; --orange-p: #ff8c00; --orange: #ffa500; --bg: #121212; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: #e0e0e0; padding: 15px; min-height: 100vh; position: relative; padding-bottom: 60px; }
+        .container { max-width: 950px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .header-section { text-align: center; margin-bottom: 30px; }
+        h1 { color: var(--gold); text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 5px; }
+        .credit { font-size: 0.9rem; color: #bbb; font-style: italic; }
+        .grid-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; padding: 10px; font-weight: bold; background: #333; border-radius: 8px; margin-bottom: 10px; text-align: center; }
+        .seal-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; background: #252525; padding: 12px; margin-bottom: 8px; border-radius: 8px; align-items: center; border: 1px solid transparent; }
+        select { width: 100%; padding: 10px; border-radius: 5px; background: #333; color: white; border: 1px solid #555; cursor: pointer; }
+        .target-section { display: flex; justify-content: space-around; background: #2d2d2d; padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 2px solid var(--gold); }
+        .btn { width: 100%; background: var(--gold); color: #000; padding: 18px; border: none; border-radius: 12px; font-weight: bold; font-size: 1.3rem; cursor: pointer; margin-top: 20px; }
+        .results { margin-top: 25px; padding: 25px; background: #000; border-radius: 15px; display: none; border-right: 8px solid var(--gold); }
+        .fire { color: #ff4500; } .water { color: #1e90ff; } .success { color: #32cd32; font-weight: bold; }
+        .cost { color: #32cd32; font-size: 1.5rem; font-weight: bold; }
+        .info-tag { font-size: 0.8rem; display: block; color: #aaa; margin-top: 4px; }
+        .footer-signature { position: fixed; bottom: 10px; left: 15px; font-size: 0.7rem; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-section">
+        <h1>🦅 الحاسبة الشاملة لأختام النسر (12 ختم)</h1>
+        <div class="credit">تم البرمجة خاص لسيرفر 92 مع الحب ❤️</div>
+    </div>
+
+    <div class="target-section">
+        <div class="target-item"><label class="fire">هدف النار:</label><select id="target-fire"><option value="12">Lv.3 (12)</option><option value="8">Lv.2 (8)</option><option value="4">Lv.1 (4)</option></select></div>
+        <div class="target-item"><label class="water">هدف الماء:</label><select id="target-water"><option value="12">Lv.3 (12)</option><option value="8">Lv.2 (8)</option><option value="4">Lv.1 (4)</option></select></div>
+    </div>
+
+    <div class="grid-header"><div>الختم</div><div>المستوى</div><div>تحويل 50</div></div>
+    <div id="seals-list"></div>
+    <button class="btn" onclick="calculate()">تحليل النقاط والتكاليف 💰</button>
+    <div id="result-box" class="results"><div id="status-report"></div><div class="cost" id="total-cost"></div></div>
+</div>
+
+<div class="footer-signature">برمجة وتنفيذ الشيخ اعدام 92</div>
+
+<script>
+    const sealsArr = [
+        { name: "الفيل", type: "gold", pattern: {10:'fire', 20:'water', 30:'fire', 40:'earth', 50:'mystery'} },
+        { name: "حورس", type: "gold", pattern: {10:'fire', 20:'water', 30:'fire', 40:'earth', 50:'mystery'} },
+        { name: "الفينيق", type: "gold", pattern: {10:'fire', 20:'earth', 30:'fire', 40:'water', 50:'mystery'} },
+        { name: "الجمل", type: "orange_p", pattern: {10:'earth', 20:'fire', 30:'water', 40:'fire', 50:'mystery'} },
+        { name: "الصقر", type: "orange", pattern: {10:'water', 20:'fire', 30:'earth', 40:'fire', 50:'mystery'} },
+        { name: "الواوي", type: "orange", pattern: {10:'water', 20:'fire', 30:'earth', 40:'fire', 50:'mystery'} },
+        { name: "الدلفين", type: "orange", pattern: {10:'water', 20:'water', 30:'water', 40:'fire', 50:'water'} },
+        { name: "القرش", type: "orange", pattern: {10:'water', 20:'water', 30:'water', 40:'fire', 50:'water'} },
+        { name: "فرس البحر", type: "orange", pattern: {10:'water', 20:'water', 30:'water', 40:'fire', 50:'water'} },
+        { name: "الحلزون", type: "orange", pattern: {10:'water', 20:'water', 30:'water', 40:'fire', 50:'water'} },
+        { name: "الحوت", type: "orange", pattern: {10:'water', 20:'water', 30:'water', 40:'fire', 50:'water'} },
+        { name: "السلحفاة", type: "orange", pattern: {10:'water', 20:'water', 30:'water', 40:'fire', 50:'water'} }
+    ];
+    const piecesMap = { 0:0, 10:1, 20:2, 25:5, 30:10, 35:18, 40:29, 45:43, 50:61 };
+    const priceMap = { gold: 50, orange_p: 30, orange: 20 };
+
+    function init() {
+        const list = document.getElementById('seals-list');
+        sealsArr.forEach((seal, idx) => {
+            list.innerHTML += `<div class="seal-row"><div><strong>${seal.name}</strong><span class="info-tag">${seal.type === 'gold' ? 'ذهبي' : 'برتقالي'}</span></div><select id="lvl-${idx}">${[0,10,20,25,30,35,40,45,50].map(l=>`<option value="${l}">${l}</option>`).join('')}</select><select id="conv-${idx}"><option value="fire">نار</option><option value="water">ماء</option></select></div>`;
+        });
+    }
+    function calculate() {
+        let fPoints = 0, wPoints = 0, cost = 0;
+        sealsArr.forEach((seal, idx) => {
+            const lvl = parseInt(document.getElementById(`lvl-${idx}`).value);
+            const conv = document.getElementById(`conv-${idx}`).value;
+            [10, 20, 30, 40, 50].forEach(m => { if(lvl >= m) { let e = seal.pattern[m]; if(e==='mystery') e=conv; if(e==='fire') fPoints++; if(e==='water') wPoints++; }});
+            cost += piecesMap[lvl] * priceMap[seal.type];
+        });
+        document.getElementById('result-box').style.display = 'block';
+        document.getElementById('status-report').innerHTML = `<p>نار: ${fPoints} | ماء: ${wPoints}</p>` + (fPoints >= document.getElementById('target-fire').value ? '<p class="success">✅ تم تفعيل النار</p>' : '') + (wPoints >= document.getElementById('target-water').value ? '<p class="success">✅ تم تفعيل الماء</p>' : '');
+        document.getElementById('total-cost').innerHTML = `التكلفة: $${cost.toLocaleString()}`;
+    }
+    init();
+</script>
+</body>
+</html>
